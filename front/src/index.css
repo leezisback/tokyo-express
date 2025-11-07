@@ -1,15 +1,45 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
+/* Brand variables — v4-friendly */
 :root {
-  color-scheme: light;
+    --brand-rose: #d97a7a;         /* верхняя полоса */
+    --brand-rose-dark: #d34747;    /* круг логотипа */
+    --brand-card: rgba(217, 122, 122, .20); /* розовый фон карточек */
+    --brand-border: #de9696;       /* рамка карточек */
+    --radius-pill: 9999px;
 }
 
-html, body, #root {
-  height: 100%;
-}
-
+html, body, #root { height: 100%; }
+:root { color-scheme: light; }
 body {
-  @apply bg-white text-black antialiased;
+    background:#fff;
+    color:#111;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Century Gothic (локально, с фолбэками) */
+@font-face {
+    font-family: "Century Gothic Local";
+    src: local("Century Gothic"), local("CenturyGothic"),
+    local("Century Gothic Bold"), local("CenturyGothic-Bold");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+:root { --font-ui: "Century Gothic Local","Century Gothic","CenturyGothic","AppleGothic",Arial,sans-serif; }
+body { font-family: var(--font-ui); }
+
+.banner-text { text-shadow: 0 2px 10px rgba(0,0,0,.3); }
+
+/* Карта товара: убираем несуществующие утилиты, задаём произвольные значения */
+.card {
+    @apply rounded-2xl border p-3;
+    background: var(--brand-card);
+    border-color: var(--brand-border);
+    box-shadow: 0 4px 14px rgba(0,0,0,.12);
+}
+.modal {
+    @apply rounded-2xl bg-white p-6;
+    box-shadow: 0 24px 60px rgba(0,0,0,.35);
 }
