@@ -1,9 +1,16 @@
-// src/routes/orders.js
+// backend/src/routes/orders.js
 const express = require("express");
 const router = express.Router();
 
-router.get("/test", (req, res) => {
-    res.json({ route: "orders", status: "ok" });
-});
+const ordersController = require("../controllers/orders.controller");
+const { auth, requireAdmin } = require("../middlewares/auth");
+
+// Публичный маршрут: создание заказа
+router.post("/", ordersController.createOrder);
+
+// Админ: просмотр/управление заказами
+router.get("/", auth, requireAdmin, ordersController.getOrders);
+router.get("/:id", auth, requireAdmin, ordersController.getOrderById);
+router.patch("/:id/status", auth, requireAdmin, ordersController.updateOrderStatus);
 
 module.exports = router;

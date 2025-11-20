@@ -1,31 +1,155 @@
-import Product from '../models/Product.js'
+// backend/src/controllers/products.controller.js
+const Product = require("../models/Product");
 
-export async function listProducts(req, res, next) {
+// Публичный список товаров
+exports.getProducts = async (req, res, next) => {
     try {
-        const { cat, q, sort='popular', page=1, limit=12 } = req.query
-        const filter = { isActive: true }
-        if (cat) filter.categorySlug = cat
-        if (q) filter.name = { $regex: q, $options: 'i' }
+        const { category, search, isPromotion } = req.query;
 
-        const sortMap = {
-            price_asc: { price: 1 },
-            price_desc: { price: -1 },
-            popular: { popularity: -1, createdAt: -1 },
-            new: { createdAt: -1 }
+        const filter = { isAvailable: true };
+
+        if (category) {
+            filter.category = category; // сюда можно передавать ObjectId строки
         }
-        const skip = (Number(page)-1) * Number(limit)
-        const [items, count] = await Promise.all([
-            Product.find(filter).sort(sortMap[sort] || sortMap.popular).skip(skip).limit(Number(limit)),
-            Product.countDocuments(filter)
-        ])
-        res.json({ items, count })
-    } catch (e) { next(e) }
-}
 
-export async function getProduct(req,res,next){
+        if (typeof isPromotion !== "undefined") {
+            filter.isPromotion = isPromotion === "true";
+        }
+
+        if (search) {
+            filter.name = { $regex: search, $options: "i" };
+        }
+
+        const products = await Product.find(filter)
+            .populate("category", "name slug")
+            .sort({ position: 1, name: 1 })
+            .lean();
+
+        res.json(products);
+    } catch (err) {
+        next(err);
+    }
+};
+
+// Публичный: один товар (на будущее)
+exports.getProductById = async (req, res, next) => {
     try {
-        const item = await Product.findById(req.params.id)
-        if (!item) return res.status(404).json({ message:'Not found' })
-        res.json(item)
-    } catch (e) { next(e) }
-}
+        const { id } = req.params;
+
+        const product = await Product.findById(id)
+            .populate("category", "name slug")
+            .lean();
+
+        if (!product) {
+            return res.status(404).json({ message: "Товар не найден" });
+        }
+
+        res.json(product);
+    } catch (err) {
+        next(err);
+    }
+};
+
+// Админ: создание товара
+exports.createProduct = async (req, res, next) => {
+    try {
+        const {
+            name,
+            slug,
+            category,
+            description,
+            composition,
+            weight,
+            price,
+            image,
+            isAvailable,
+            isPromotion,
+            discountPercent,
+            position,
+        } = req.body;
+
+        const product = await Product.create({
+            name,
+            slug,
+            category,
+            description,
+            composition,
+            weight,
+            price,
+            image: image || "",
+            isAvailable: isAvailable ?? true,
+            isPromotion: isPromotion ?? false,
+            discountPercent: discountPercent ?? 0,
+            position: position ?? 0,
+        });
+
+        res.status(201).json(product);
+    } catch (err) {
+        next(err);
+    }
+};
+
+// Админ: обновление товара
+exports.updateProduct = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        const {
+            name,
+            slug,
+            category,
+            description,
+            composition,
+            weight,
+            price,
+            image,
+            isAvailable,
+            isPromotion,
+            discountPercent,
+            position,
+        } = req.body;
+
+        const product = await Product.findByIdAndUpdate(
+            id,
+            {
+                name,
+                slug,
+                category,
+                description,
+                composition,
+                weight,
+                price,
+                image,
+                isAvailable,
+                isPromotion,
+                discountPercent,
+                position,
+            },
+            { new: true }
+        );
+
+        if (!product) {
+            return res.status(404).json({ message: "Товар не найден" });
+        }
+
+        res.json(product);
+    } catch (err) {
+        next(err);
+    }
+};
+
+// Админ: удаление товара
+exports.deleteProduct = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        const product = await Product.findByIdAndDelete(id);
+        if (!product) {
+            return res.status(404).json({ message: "Товар не найден" });
+        }
+
+        res.json({ message: "Товар удалён" });
+    } catch (err) {
+        next(err);
+    }
+};
