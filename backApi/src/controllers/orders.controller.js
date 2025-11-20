@@ -1,34 +1,177 @@
-import Order from '../models/Order.js'
-import Product from '../models/Product.js'
-import { calcTotal } from '../utils/calcTotal.js'
+// backend/src/controllers/orders.controller.js
+const Order = require("../models/Order");
+const calcTotal = require("../utils/calcTotal");
+const Promotion = require("../models/Promotion");
 
-export async function createOrder(req,res,next){
-    try {
-        const { items, delivery } = req.body
-        if (!Array.isArray(items) || !items.length) return res.status(400).json({message:'Empty cart'})
+async function getActiveOrderPromotion() {
+    const now = new Date();
 
-        // перезапрашиваем цены/названия по id (защита от подмены)
-        const ids = items.map(i=>i.productId).filter(Boolean)
-        const dbProducts = await Product.find({ _id:{ $in: ids } })
-        const map = new Map(dbProducts.map(p=>[String(p._id), p]))
+    const promotion = await Promotion.findOne({
+        isActive: true,
+        discountPercent: { $gt: 0 },
+        $or: [
+            { activeFrom: null, activeTo: null },
+            {
+                activeFrom: { $lte: now },
+                activeTo: { $gte: now },
+            },
+            {
+                activeFrom: { $lte: now },
+                activeTo: null,
+            },
+        ],
+    })
+        .sort({ createdAt: -1 })
+        .lean();
 
-        const normalized = items.map(i=>{
-            const p = i.productId ? map.get(String(i.productId)) : null
-            if (p) return { productId: p._id, name: p.name, price: p.price, qty: Number(i.qty)||1 }
-            // если пришли только name/price без id — оставим как есть, но лучше требовать id
-            return { name: i.name, price: Number(i.price)||0, qty: Number(i.qty)||1 }
-        })
-
-        const total = calcTotal(normalized)
-        const order = await Order.create({ items: normalized, total, delivery })
-        res.status(201).json({ orderId: order._id })
-    } catch (e) { next(e) }
+    return promotion;
 }
 
-export async function getOrder(req,res,next){
+// Публичный: создание заказа
+exports.createOrder = async (req, res, next) => {
     try {
-        const o = await Order.findById(req.params.id)
-        if (!o) return res.status(404).json({ message:'Not found' })
-        res.json(o)
-    } catch (e) { next(e) }
-}
+        const { items, mode, address, phone, comment } = req.body;
+
+        if (!Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ message: "Корзина пуста" });
+        }
+
+        if (!mode || !["delivery", "pickup"].includes(mode)) {
+            return res.status(400).json({ message: "Неверный режим заказа" });
+        }
+
+        if (!phone) {
+            return res.status(400).json({ message: "Укажите телефон" });
+        }
+
+        const normalizedItems = items.map(item => ({
+            product: item.product,
+            name: item.name,
+            price: item.price,
+            qty: item.qty,
+        }));
+
+        const deliveryPrice = mode === "delivery" ? 150 : 0;
+
+        const activePromotion = await getActiveOrderPromotion();
+
+        const discountPercent =
+            activePromotion && activePromotion.minOrderTotal
+                ? undefined
+                : activePromotion?.discountPercent || 0;
+
+        // сначала считаем без скидки, чтобы проверить minOrderTotal
+        const draft = calcTotal(
+            normalizedItems.map(i => ({ price: i.price, qty: i.qty })),
+            deliveryPrice,
+            0
+        );
+
+        let finalDiscountPercent = 0;
+
+        if (activePromotion && activePromotion.discountPercent > 0) {
+            if (!activePromotion.minOrderTotal || draft.subtotal >= activePromotion.minOrderTotal) {
+                finalDiscountPercent = activePromotion.discountPercent;
+            }
+        }
+
+        const totals = calcTotal(
+            normalizedItems.map(i => ({ price: i.price, qty: i.qty })),
+            deliveryPrice,
+            finalDiscountPercent
+        );
+
+        const order = await Order.create({
+            items: normalizedItems,
+            subtotal: totals.subtotal,
+            deliveryPrice: totals.deliveryPrice,
+            total: totals.total,
+            mode,
+            address: mode === "delivery" ? address || {} : {},
+            phone,
+            comment: comment || "",
+            status: "new",
+        });
+
+        res.status(201).json(order);
+    } catch (err) {
+        next(err);
+    }
+};
+
+// Админ: список заказов
+exports.getOrders = async (req, res, next) => {
+    try {
+        const { status, mode } = req.query;
+
+        const filter = {};
+
+        if (status) {
+            filter.status = status;
+        }
+
+        if (mode) {
+            filter.mode = mode;
+        }
+
+        const orders = await Order.find(filter)
+            .sort({ createdAt: -1 })
+            .lean();
+
+        res.json(orders);
+    } catch (err) {
+        next(err);
+    }
+};
+
+// Админ: один заказ
+exports.getOrderById = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        const order = await Order.findById(id).lean();
+        if (!order) {
+            return res.status(404).json({ message: "Заказ не найден" });
+        }
+
+        res.json(order);
+    } catch (err) {
+        next(err);
+    }
+};
+
+// Админ: смена статуса
+exports.updateOrderStatus = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        const allowedStatuses = [
+            "new",
+            "accepted",
+            "cooking",
+            "to_courier",
+            "on_way",
+            "done",
+            "canceled",
+        ];
+
+        if (!allowedStatuses.includes(status)) {
+            return res.status(400).json({ message: "Неверный статус" });
+        }
+
+        const order = await Order.findByIdAndUpdate(
+            id,
+            { status },
+            { new: true }
+        );
+
+        if (!order) {
+            return res.status(404).json({ message: "Заказ не найден" });
+        }
+
+        res.json(order);
+    } catch (err) {
+        next(err);
+    }
+};

@@ -1,10 +1,17 @@
-import path from 'path'
-import { fileURLToPath } from 'url'
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+// backend/src/controllers/upload.controller.js
+exports.uploadImage = (req, res, next) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: "Файл не загружен" });
+        }
 
-export function postImage(req,res){
-    if (!req.file) return res.status(400).json({ message:'No file' })
-    const url = `/uploads/${req.file.filename}`
-    return res.status(201).json({ url })
-}
+        const relativePath = `/uploads/${req.file.filename}`;
+
+        return res.status(201).json({
+            path: relativePath,
+            filename: req.file.filename,
+        });
+    } catch (err) {
+        next(err);
+    }
+};
