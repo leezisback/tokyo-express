@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
-import logo from "@/assets/images/logo.png";
+import logo from "../../../public/images/logo.png";
 
 const dropdown = [
     { to: "/menu?cat=classic", label: "Классические роллы" },

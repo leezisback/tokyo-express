@@ -20,11 +20,11 @@ export const CATEGORY_DROPDOWN = [
 ];
 
 // src/lib/mock.js
-import card1 from "@/assets/images/card-1.png";
-import card2 from "@/assets/images/card-2.png";
-import card3 from "@/assets/images/card-3.png";
-import card4 from "@/assets/images/card-4.png";
-import card5 from "@/assets/images/card-5.png";
+import card1 from "./../../public/images/card-1.png";
+import card2 from "./../../public/images/card-2.png";
+import card3 from "./../../public/images/card-3.png";
+import card4 from "./../../public/images/card-4.png";
+import card5 from "./../../public/images/card-5.png";
 
 export const PRODUCTS = [
     {

@@ -1,4 +1,4 @@
-// pages/Menu/index.jsx
+// src/pages/Menu/index.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
@@ -8,6 +8,9 @@ import { fetchCategories, fetchProducts } from "@/lib/api";
 export default function MenuPage() {
     const [searchParams] = useSearchParams();
     const initialCat = searchParams.get("cat") || "all";
+    const searchQuery = (searchParams.get("q") || "")
+        .trim()
+        .toLowerCase();
 
     const [active, setActive] = useState(initialCat);
     const [categories, setCategories] = useState([]);
@@ -42,7 +45,6 @@ export default function MenuPage() {
                 setCategories(normCats);
                 setProducts(normProducts);
 
-                // если в URL был cat и он есть среди категорий — активируем его
                 if (
                     initialCat !== "all" &&
                     normCats.some((c) => c.key === initialCat)
@@ -64,14 +66,29 @@ export default function MenuPage() {
 
     const filtered = useMemo(() => {
         let list = Array.isArray(products) ? [...products] : [];
+
+        // фильтр по категории
         if (active && active !== "all") {
             list = list.filter(
                 (p) =>
                     (p.categorySlug || p.category?.slug || "") === active,
             );
         }
+
+        // фильтр по поиску
+        if (searchQuery) {
+            list = list.filter((p) => {
+                const name = (p.name || "").toLowerCase();
+                const desc = (p.description || "").toLowerCase();
+                return (
+                    name.includes(searchQuery) ||
+                    desc.includes(searchQuery)
+                );
+            });
+        }
+
         return list;
-    }, [products, active]);
+    }, [products, active, searchQuery]);
 
     return (
         <section className="max-w-6xl mx-auto px-4 py-6">

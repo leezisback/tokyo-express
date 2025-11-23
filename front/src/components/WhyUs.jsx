@@ -1,8 +1,8 @@
 // src/components/WhyUs.jsx
 import React from "react";
-import benefit1 from "./../assets/images/delivery.png";
-import benefit2 from "./../assets/images/advantage-pros.png";
-import benefit3 from "./../assets/images/adv-24-7.png";
+import benefit1 from "./../../public/images/delivery.png";
+import benefit2 from "./../../public/images/advantage-pros.png";
+import benefit3 from "./../../public/images/adv-24-7.png";
 
 const TitleWithDot = ({ children }) => (
     <div className="relative inline-block mt-2 mb-16">

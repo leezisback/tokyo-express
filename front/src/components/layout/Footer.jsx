@@ -1,6 +1,6 @@
 // src/components/layout/Footer.jsx
 import React from "react";
-import logo from "./../../assets/images/logo.png"; // проверь путь к файлу
+import logo from "./../../../public/images/logo.png"; // проверь путь к файлу
 
 export default function Footer() {
     return (

@@ -167,11 +167,7 @@ export default function HomePage() {
             />
 
             {/* Контент */}
-            <CategoryBar
-                active={active}
-                setActive={setActive}
-                categories={categories}
-            />
+
 
             <Hero />
 
@@ -183,7 +179,11 @@ export default function HomePage() {
             {error && (
                 <div className="mt-6 text-sm text-red-600">{error}</div>
             )}
-
+            <CategoryBar
+                active={active}
+                setActive={setActive}
+                categories={categories}
+            />
             {!loading && !error && (
                 <ProductsGrid
                     active={active}
