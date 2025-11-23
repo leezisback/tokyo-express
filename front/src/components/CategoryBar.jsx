@@ -1,15 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { CATEGORY_TABS, CATEGORY_DROPDOWN } from "../lib/mock";
 
-export default function CategoryBar({ active, setActive }) {
+/**
+ * Панель категорий:
+ * - tabs: "Все" + категории из backend
+ * - справа горизонтальные табы
+ * - слева — кнопка "Все категории ▾" с дропдауном
+ */
+export default function CategoryBar({ active, setActive, categories = [] }) {
     const [open, setOpen] = useState(false);
     const wrapRef = useRef(null);
 
-    const LABEL_TO_KEY = useMemo(
-        () => Object.fromEntries(CATEGORY_TABS.map((t) => [t.label, t.key])),
-        []
-    );
-
+    // закрытие дропдауна по клику снаружи
     useEffect(() => {
         const onDocClick = (e) => {
             if (!wrapRef.current) return;
@@ -19,51 +20,80 @@ export default function CategoryBar({ active, setActive }) {
         return () => document.removeEventListener("mousedown", onDocClick);
     }, []);
 
-    const selectLabel = (label) => {
-        const key = LABEL_TO_KEY[label] ?? "all";
-        setActive(key);
-        setOpen(false);
-    };
+    const tabs = useMemo(() => {
+        const base = (categories || []).map((c) => ({
+            key: c.slug || c.key || String(c._id),
+            label: c.name || c.label,
+        }));
+        // "Все" как отдельный таб
+        return [{ key: "all", label: "Все" }, ...base];
+    }, [categories]);
 
     const tabBase =
         "-mb-0.5 border-b-2 pb-2 text-base font-semibold transition select-none text-center w-full";
     const tabClass = (isActive) =>
-        `${tabBase} ${isActive ? "border-black text-black" : "border-transparent text-black/60 hover:text-black"}`;
+        `${tabBase} ${
+            isActive
+                ? "border-black text-black"
+                : "border-transparent text-black/60 hover:text-black"
+        }`;
+
+    const handleSelect = (key) => {
+        if (typeof setActive === "function") {
+            setActive(key);
+        }
+        setOpen(false);
+    };
 
     return (
-        <div id="menu" className="mx-auto max-w-6xl px-4 relative" ref={wrapRef}>
-            {/* ряд табов растянут на всю ширину */}
+        <div
+            id="menu"
+            className="relative mx-auto max-w-6xl px-4"
+            ref={wrapRef}
+        >
             <div className="flex w-full items-center gap-4">
-                {/* Меню с дропдауном — тоже занимает долю ширины */}
-                <div className="relative flex">
+                {/* Кнопка дропдауна со всеми категориями */}
+                <div className="relative">
+                    <button
+                        type="button"
+                        onClick={() => setOpen((v) => !v)}
+                        className="rounded-xl bg-neutral-100 px-3 py-2 text-sm shadow-sm"
+                    >
+                        Все категории ▾
+                    </button>
 
                     {open && (
                         <div
-                            onMouseLeave={() => setOpen(false)}
-                            className="absolute inset-x-0 top-full mt-2 z-50 rounded-2xl bg-white p-2 text-[15px] shadow-2xl ring-1 ring-black/5 max-h-[70vh] overflow-auto"
+                            className="absolute z-50 mt-2 w-64 max-h-[70vh] overflow-auto rounded-2xl bg-white p-2 text-[15px] shadow-2xl ring-1 ring-black/5"
                             role="menu"
                         >
-                            <div className="grid gap-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                                {CATEGORY_DROPDOWN.map((it) => (
-                                    <button
-                                        key={it}
-                                        onClick={() => selectLabel(it)}
-                                        className="text-left rounded-lg px-3 py-2 hover:bg-neutral-100"
-                                        role="menuitem"
-                                    >
-                                        {it}
-                                    </button>
+                            <ul className="space-y-1">
+                                {tabs.map((t) => (
+                                    <li key={t.key}>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSelect(t.key)}
+                                            className={`w-full text-left rounded-lg px-3 py-2 hover:bg-neutral-100 ${
+                                                active === t.key
+                                                    ? "font-semibold"
+                                                    : ""
+                                            }`}
+                                        >
+                                            {t.label}
+                                        </button>
+                                    </li>
                                 ))}
-                            </div>
+                            </ul>
                         </div>
                     )}
                 </div>
 
-                {/* Остальные табы — равные доли по ширине */}
-                {CATEGORY_TABS.map((c) => (
-                    <div key={c.key} className="flex-1">
+                {/* Горизонтальные табы */}
+                {tabs.map((c) => (
+                    <div key={c.key} className="hidden flex-1 sm:block">
                         <button
-                            onClick={() => setActive(c.key)}
+                            type="button"
+                            onClick={() => handleSelect(c.key)}
                             className={tabClass(active === c.key)}
                         >
                             {c.label}

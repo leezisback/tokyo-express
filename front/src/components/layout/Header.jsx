@@ -15,12 +15,14 @@ const dropdown = [
     { to: "/menu",             label: "Все" },
 ];
 
-export default function Header({ onOpenCart }) {
+export default function Header({ onOpenCart = () => {} }) {
     const [q, setQ] = useState("");
 
     const onSearch = (e) => {
         e.preventDefault();
-        const url = q.trim() ? `/menu?q=${encodeURIComponent(q)}` : "/menu";
+        const url = q.trim()
+            ? `/menu?q=${encodeURIComponent(q.trim())}`
+            : "/menu";
         window.location.assign(url);
     };
 
@@ -32,15 +34,17 @@ export default function Header({ onOpenCart }) {
                     <nav className="flex items-center gap-6 text-[13px] leading-[100%]">
                         {/* Пункт «Меню» с выпадающим списком */}
                         <div className="relative group">
-                            <NavLink to="/menu" className="hover:underline">Меню</NavLink>
+                            <NavLink to="/menu" className="hover:underline">
+                                Меню
+                            </NavLink>
                             {/* Дропдаун */}
                             <div
                                 className="
-                  invisible opacity-0 group-hover:visible group-hover:opacity-100
-                  group-focus-within:visible group-focus-within:opacity-100
-                  absolute left-0 mt-2 w-56 rounded-lg bg-white shadow-xl ring-1 ring-black/5
-                  transition-opacity duration-150 z-50
-                "
+                                    invisible opacity-0 group-hover:visible group-hover:opacity-100
+                                    group-focus-within:visible group-focus-within:opacity-100
+                                    absolute left-0 mt-2 w-56 rounded-lg bg-white shadow-xl ring-1 ring-black/5
+                                    transition-opacity duration-150 z-50
+                                "
                             >
                                 <ul className="max-h-[70vh] overflow-auto py-2">
                                     {dropdown.map((item) => (
@@ -59,11 +63,22 @@ export default function Header({ onOpenCart }) {
                             </div>
                         </div>
 
-                        <NavLink to="/admin/stats" className="hover:underline">Преимущества</NavLink>
-                        <NavLink to="/contacts" className="hover:underline">Контакты</NavLink>
+                        {/* якорь на блок «Почему нас выбирают» */}
+                        <NavLink to="/#benefits" className="hover:underline">
+                            Преимущества
+                        </NavLink>
+
+                        <NavLink to="/contacts" className="hover:underline">
+                            Контакты
+                        </NavLink>
                     </nav>
 
-                    <a href="tel:+79967898585" className="text-[13px] font-semibold">7 (996) 789 - 85 - 85</a>
+                    <a
+                        href="tel:+79967898585"
+                        className="text-[13px] font-semibold"
+                    >
+                        7 (996) 789 - 85 - 85
+                    </a>
                 </div>
             </div>
 
@@ -79,7 +94,7 @@ export default function Header({ onOpenCart }) {
                     />
                 </NavLink>
 
-                {/* ОДНО поле поиска (убрали дубликат) */}
+                {/* Поле поиска */}
                 <form onSubmit={onSearch} className="flex-1">
                     <label className="group flex h-10 w-full items-center rounded-[12px] bg-[#D9D9D9] px-3">
                         <svg
@@ -91,7 +106,12 @@ export default function Header({ onOpenCart }) {
                             aria-hidden="true"
                         >
                             <circle cx="11" cy="11" r="7" />
-                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            <line
+                                x1="21"
+                                y1="21"
+                                x2="16.65"
+                                y2="16.65"
+                            />
                         </svg>
                         <input
                             value={q}
@@ -108,9 +128,16 @@ export default function Header({ onOpenCart }) {
                     className="rounded-lg p-2 hover:bg-neutral-100"
                     aria-label="Открыть корзину"
                 >
-                    {/* простая иконка корзины */}
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="opacity-90">
-                        <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
+                    <svg
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        className="opacity-90"
+                    >
+                        <circle cx="9" cy="21" r="1" />
+                        <circle cx="20" cy="21" r="1" />
                         <path d="M1 1h4l2.68 12.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
                     </svg>
                 </button>

@@ -1,19 +1,31 @@
+// src/components/ProductModal.jsx
 import React from "react";
 
 export default function ProductModal({ product, open, onClose, onAdd }) {
     if (!product) return null;
 
-    const hasImg = Boolean(product.image); // проверь, что поле совпадает по названию
+    const hasImg = Boolean(product.image);
+
+    const composition = product.composition || product.description || "";
+    const weight = product.weight || "";
 
     return (
         <div
             className={`fixed inset-0 z-50 ${open ? "flex" : "hidden"} items-center justify-center bg-black/40 p-4`}
             onClick={onClose}
         >
-            <div onClick={(e) => e.stopPropagation()} className="modal w-full max-w-3xl">
+            <div
+                onClick={(e) => e.stopPropagation()}
+                className="modal w-full max-w-3xl"
+            >
                 <div className="mb-2 flex items-start justify-between">
                     <h3 className="text-2xl font-semibold">{product.name}</h3>
-                    <button className="rounded-full p-1 hover:bg-neutral-100" onClick={onClose}>✕</button>
+                    <button
+                        className="rounded-full p-1 hover:bg-neutral-100"
+                        onClick={onClose}
+                    >
+                        ✕
+                    </button>
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2">
@@ -23,7 +35,7 @@ export default function ProductModal({ product, open, onClose, onAdd }) {
                             <div className="aspect-[4/3] w-full">
                                 {hasImg ? (
                                     <img
-                                        src={product.image}        // <— Убедись, что путь валиден
+                                        src={product.image}
                                         alt={product.name}
                                         className="h-full w-full object-contain"
                                         loading="lazy"
@@ -40,12 +52,27 @@ export default function ProductModal({ product, open, onClose, onAdd }) {
 
                     {/* Описание / кнопки */}
                     <div>
-                        <div className="mb-3 text-sm opacity-80">Состав: {product.description}</div>
-                        <div className="mb-6 text-sm opacity-80">{product.weight} г</div>
-                        <div className="mb-6 text-right text-xl font-semibold">{product.price}₽</div>
+                        {composition && (
+                            <div className="mb-3 text-sm opacity-80">
+                                Состав: {composition}
+                            </div>
+                        )}
+
+                        {weight && (
+                            <div className="mb-6 text-sm opacity-80">
+                                {weight}
+                            </div>
+                        )}
+
+                        <div className="mb-6 text-right text-xl font-semibold">
+                            {product.price}₽
+                        </div>
                         <button
                             className="rounded-xl bg-[var(--brand-rose)] px-6 py-3 font-semibold text-white shadow"
-                            onClick={() => { onAdd(product); onClose(); }}
+                            onClick={() => {
+                                onAdd(product);
+                                onClose();
+                            }}
                         >
                             Добавить в корзину
                         </button>
