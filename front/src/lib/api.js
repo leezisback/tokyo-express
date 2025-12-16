@@ -1,5 +1,5 @@
 // src/lib/api.js
-const Api = "http://localhost:5001";
+const Api = "";
 
 async function toJsonOrThrow(r, defaultMessage = "Ошибка запроса") {
     let data = null;
