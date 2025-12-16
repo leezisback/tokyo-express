@@ -1,5 +1,5 @@
 // src/lib/api.js
-const Api = import.meta.env.VITE_API_URL || "http://localhost:5001";
+const Api = "http://localhost:5001";
 
 async function toJsonOrThrow(r, defaultMessage = "Ошибка запроса") {
     let data = null;
