@@ -1,24 +1,39 @@
 // src/pages/Menu/index.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import CategoryBar from "@/components/CategoryBar";
-import { fetchCategories, fetchProducts } from "@/lib/api";
+import ProductsGrid from "@/components/ProductsGrid";
+
+// + то же, что на Home
+import { fetchCategories, fetchProducts, createOrder } from "@/lib/api";
+import ProductModal from "@/components/ProductModal.jsx";
+import CartSheet from "@/components/CartSheet.jsx";
+import CheckoutModal from "@/components/CheckoutModal.jsx";
 
 export default function MenuPage() {
     const [searchParams] = useSearchParams();
     const initialCat = searchParams.get("cat") || "all";
-    const searchQuery = (searchParams.get("q") || "")
-        .trim()
-        .toLowerCase();
 
     const [active, setActive] = useState(initialCat);
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // корзина + модалки (как на Home)
+    const [cart, setCart] = useState([]);
+    const [product, setProduct] = useState(null);
+    const [openCart, setOpenCart] = useState(false);
+    const [openCheckout, setOpenCheckout] = useState(false);
+
+    const [orderLoading, setOrderLoading] = useState(false);
+    const [orderError, setOrderError] = useState(null);
+
     useEffect(() => {
+        let cancelled = false;
+
         async function load() {
             try {
                 setLoading(true);
@@ -42,101 +57,155 @@ export default function MenuPage() {
                     categorySlug: p.category?.slug || "",
                 }));
 
-                setCategories(normCats);
-                setProducts(normProducts);
+                if (!cancelled) {
+                    setCategories(normCats);
+                    setProducts(normProducts);
 
-                if (
-                    initialCat !== "all" &&
-                    normCats.some((c) => c.key === initialCat)
-                ) {
-                    setActive(initialCat);
-                } else {
-                    setActive("all");
+                    if (initialCat !== "all" && normCats.some((c) => c.key === initialCat)) {
+                        setActive(initialCat);
+                    } else {
+                        setActive("all");
+                    }
                 }
             } catch (e) {
                 console.error(e);
-                setError("Ошибка загрузки меню");
+                if (!cancelled) setError("Ошибка загрузки меню");
             } finally {
-                setLoading(false);
+                if (!cancelled) setLoading(false);
             }
         }
 
         load();
+        return () => {
+            cancelled = true;
+        };
     }, [initialCat]);
 
-    const filtered = useMemo(() => {
-        let list = Array.isArray(products) ? [...products] : [];
+    // добавить в корзину и открыть оформление (как Home)
+    const quickOrder = (p) => {
+        if (!p) return;
 
-        // фильтр по категории
-        if (active && active !== "all") {
-            list = list.filter(
-                (p) =>
-                    (p.categorySlug || p.category?.slug || "") === active,
-            );
-        }
+        const pid = String(p.id ?? p._id ?? "");
+        if (!pid) return;
 
-        // фильтр по поиску
-        if (searchQuery) {
-            list = list.filter((p) => {
-                const name = (p.name || "").toLowerCase();
-                const desc = (p.description || "").toLowerCase();
-                return (
-                    name.includes(searchQuery) ||
-                    desc.includes(searchQuery)
+        const price = Number(p.price ?? 0);
+
+        setCart((c) => {
+            const ex = c.find((x) => String(x.id) === pid);
+            if (ex) {
+                return c.map((x) =>
+                    String(x.id) === pid ? { ...x, qty: (x.qty ?? 0) + 1 } : x
                 );
-            });
-        }
+            }
+            return [...c, { id: pid, name: p.name ?? "", price, qty: 1 }];
+        });
 
-        return list;
-    }, [products, active, searchQuery]);
+        setOpenCheckout(true);
+    };
+
+    // отправка заказа на backend (копия логики Home)
+    const handleSubmitOrder = async (mode, form) => {
+        try {
+            setOrderLoading(true);
+            setOrderError(null);
+
+            const items = cart.map((i) => ({
+                product: i.id,
+                name: i.name,
+                price: i.price,
+                qty: i.qty,
+            }));
+
+            const payload = {
+                items,
+                mode, // "delivery" | "pickup"
+                address:
+                    mode === "delivery"
+                        ? {
+                            street: form.street,
+                            house: form.house,
+                            entrance: form.entrance,
+                            floor: form.floor,
+                            apartment: form.apartment,
+                            isPrivateHouse: form.isPrivateHouse,
+                        }
+                        : {},
+                phone: form.phone.trim(),
+                comment: form.comment || "",
+            };
+
+            await createOrder(payload);
+
+            setCart([]);
+            setOpenCheckout(false);
+            alert("Заказ успешно оформлен! Мы скоро вам перезвоним.");
+        } catch (e) {
+            console.error(e);
+            setOrderError("Ошибка при оформлении заказа. Попробуйте ещё раз.");
+            throw e;
+        } finally {
+            setOrderLoading(false);
+        }
+    };
+
+    const itemsCount = cart.reduce((s, x) => s + (Number(x.qty) || 0), 0);
 
     return (
         <section className="max-w-6xl mx-auto px-4 py-6">
-            <CategoryBar
-                active={active}
-                setActive={setActive}
-                categories={categories}
+            {/* Модалки заказа (как Home) */}
+            <ProductModal
+                product={product}
+                open={!!product}
+                onClose={() => setProduct(null)}
+                onAdd={quickOrder}
             />
 
+            <CartSheet
+                open={openCart}
+                onClose={() => setOpenCart(false)}
+                cart={cart}
+                setCart={setCart}
+                onCheckout={() => {
+                    setOpenCart(false);
+                    setOpenCheckout(true);
+                }}
+            />
+
+            <CheckoutModal
+                open={openCheckout}
+                onClose={() => setOpenCheckout(false)}
+                cart={cart}
+                onSubmit={handleSubmitOrder}
+                loading={orderLoading}
+                error={orderError}
+            />
+
+            <CategoryBar active={active} setActive={setActive} categories={categories} />
+
             {loading && (
-                <div className="mt-6 text-sm text-neutral-600">
-                    Загрузка меню...
-                </div>
-            )}
-            {error && (
-                <div className="mt-6 text-sm text-red-600">{error}</div>
+                <div className="mt-6 text-sm text-neutral-600">Загрузка меню...</div>
             )}
 
+            {error && <div className="mt-6 text-sm text-red-600">{error}</div>}
+
             {!loading && !error && (
-                <div className="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {filtered.map((p) => (
-                        <article
-                            key={p.id || p._id}
-                            className="rounded-2xl border shadow-sm overflow-hidden"
-                        >
-                            <img
-                                src={p.image}
-                                alt={p.name}
-                                className="w-full aspect-[4/3] object-contain bg-white"
-                                loading="lazy"
-                                decoding="async"
-                            />
-                            <div className="p-3">
-                                <h3 className="font-semibold text-sm">
-                                    {p.name}
-                                </h3>
-                                {p.weight && (
-                                    <div className="mt-1 text-xs text-black/60">
-                                        {p.weight}
-                                    </div>
-                                )}
-                                <div className="mt-1 text-base font-bold">
-                                    {p.price} ₽
-                                </div>
-                            </div>
-                        </article>
-                    ))}
-                </div>
+                <ProductsGrid
+                    active={active}
+                    products={products}
+                    onAdd={quickOrder}
+                    onOpen={setProduct}
+                />
+            )}
+
+            {/* Кнопка корзины (чтобы можно было открыть и поправить количество) */}
+            {itemsCount > 0 && (
+                <button
+                    type="button"
+                    onClick={() => setOpenCart(true)}
+                    className="fixed bottom-4 right-4 z-40 rounded-2xl bg-black px-4 py-3 text-white shadow-lg hover:opacity-90"
+                >
+                    Корзина • {itemsCount}
+                </button>
             )}
         </section>
     );
