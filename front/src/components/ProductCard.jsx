@@ -1,9 +1,11 @@
 import React from "react";
 
 export default function ProductCard({ p, onAdd, onOpen }) {
+    const spicyLevel = p.spicyLevel || 0;
+
     return (
         <div className="card rounded-2xl border bg-white p-3">
-            <div className="mb-3 overflow-hidden rounded-2xl bg-white shadow-inner">
+            <div className="mb-3 overflow-hidden rounded-2xl bg-white shadow-inner relative">
                 <div className="grid aspect-[4/3] w-full place-items-center">
                     {p.image ? (
                         <img
@@ -17,9 +19,20 @@ export default function ProductCard({ p, onAdd, onOpen }) {
                         <div className="text-xs text-neutral-400">image</div>
                     )}
                 </div>
+                {spicyLevel > 0 && (
+                    <div className="absolute top-2 right-2 flex gap-0.5">
+                        {Array.from({ length: spicyLevel }).map((_, i) => (
+                            <span key={i} className="text-red-500 text-lg drop-shadow">
+                                🌶️
+                            </span>
+                        ))}
+                    </div>
+                )}
             </div>
 
-            <div className="mb-1 line-clamp-1 text-sm font-medium">{p.name}</div>
+            <div className="mb-1 line-clamp-1 text-sm font-medium">
+                {p.name}
+            </div>
 
             <div className="flex items-center justify-between">
                 <div className="text-lg font-semibold">{p.price}₽</div>

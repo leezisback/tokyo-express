@@ -14,6 +14,7 @@ const catalogRoutes = require("./routes/catalog");
 const promotionsRoutes = require("./routes/promotions");
 const ordersRoutes = require("./routes/orders");
 const uploadRoutes = require("./routes/upload");
+const statsRoutes = require("./routes/stats");
 
 // middleware ошибок
 const errorMiddleware = require("./middlewares/error");
@@ -53,6 +54,7 @@ app.use("/api/catalog", catalogRoutes);
 app.use("/api/promotions", promotionsRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/stats", statsRoutes);
 
 // 404 для несуществующих маршрутов API
 app.use((req, res, next) => {

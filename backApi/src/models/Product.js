@@ -58,6 +58,12 @@ const productSchema = new Schema(
             type: Number,
             default: 0, // сортировка внутри категории
         },
+        spicyLevel: {
+            type: Number,
+            default: 0, // 0 - не острое, 1-3 - уровень остроты
+            min: 0,
+            max: 3,
+        },
     },
     {
         timestamps: true,

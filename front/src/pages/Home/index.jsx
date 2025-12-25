@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 
 import { fetchCategories, fetchProducts, createOrder } from "@/lib/api";
 import Hero from "@/components/Hero.jsx";
+import QuickLinks from "@/components/QuickLinks.jsx";
 import CategoryBar from "@/components/CategoryBar.jsx";
 import ProductsGrid from "@/components/ProductsGrid.jsx";
 import WhyUs from "@/components/WhyUs.jsx";
@@ -171,6 +172,13 @@ export default function HomePage() {
 
             <Hero />
 
+            {!loading && !error && (
+                <QuickLinks
+                    categories={categories}
+                    onCategoryClick={setActive}
+                />
+            )}
+
             {loading && (
                 <div className="mt-6 text-sm text-neutral-600">
                     Загрузка меню...
@@ -179,11 +187,13 @@ export default function HomePage() {
             {error && (
                 <div className="mt-6 text-sm text-red-600">{error}</div>
             )}
-            <CategoryBar
-                active={active}
-                setActive={setActive}
-                categories={categories}
-            />
+            <div id="menu">
+                <CategoryBar
+                    active={active}
+                    setActive={setActive}
+                    categories={categories}
+                />
+            </div>
             {!loading && !error && (
                 <ProductsGrid
                     active={active}

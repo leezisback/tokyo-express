@@ -22,6 +22,10 @@ export default function MenuPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Фильтры и сортировка
+    const [sortBy, setSortBy] = useState("position"); // position | price-asc | price-desc | name
+    const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
+
     // корзина + модалки (как на Home)
     const [cart, setCart] = useState([]);
     const [product, setProduct] = useState(null);

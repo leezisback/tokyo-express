@@ -58,6 +58,7 @@ export default function AdminMenuPage() {
         isPromotion: false,
         discountPercent: 0,
         position: 0,
+        spicyLevel: 0,
     });
     const [prodSaving, setProdSaving] = useState(false);
     const [prodError, setProdError] = useState(null);
@@ -228,6 +229,7 @@ export default function AdminMenuPage() {
             isPromotion: false,
             discountPercent: 0,
             position: 0,
+            spicyLevel: 0,
         });
         setProdError(null);
     };
@@ -266,6 +268,7 @@ export default function AdminMenuPage() {
                     ? String(p.discountPercent)
                     : "0",
             position: p.position != null ? String(p.position) : "0",
+            spicyLevel: p.spicyLevel != null ? String(p.spicyLevel) : "0",
         });
         setProdError(null);
     };
@@ -351,6 +354,7 @@ export default function AdminMenuPage() {
             isPromotion: Boolean(productForm.isPromotion),
             discountPercent: Number(productForm.discountPercent) || 0,
             position: Number(productForm.position) || 0,
+            spicyLevel: Number(productForm.spicyLevel) || 0,
         };
 
         try {
@@ -845,6 +849,21 @@ export default function AdminMenuPage() {
                                         "discountPercent",
                                     )}
                                 />
+                            </label>
+                            <label className="flex items-center gap-2 text-xs">
+                                Острота (0-3) 🌶️
+                                <select
+                                    className="w-16 rounded-xl border px-2 py-1 text-xs"
+                                    value={productForm.spicyLevel}
+                                    onChange={handleProductChange(
+                                        "spicyLevel",
+                                    )}
+                                >
+                                    <option value="0">Нет</option>
+                                    <option value="1">🌶️</option>
+                                    <option value="2">🌶️🌶️</option>
+                                    <option value="3">🌶️🌶️🌶️</option>
+                                </select>
                             </label>
                         </div>
 

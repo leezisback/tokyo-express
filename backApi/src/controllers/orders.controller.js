@@ -96,3 +96,41 @@ exports.updateOrderStatus = async (req, res, next) => {
         next(err);
     }
 };
+
+exports.updateOrder = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { items, address, phone, comment } = req.body;
+
+        const order = await Order.findById(id);
+        if (!order) {
+            return res.status(404).json({ message: "Заказ не найден" });
+        }
+
+        // Обновляем поля, если они переданы
+        if (items && Array.isArray(items)) {
+            order.items = items;
+            const subtotal = calcTotal(items);
+            order.subtotal = subtotal;
+            order.total = subtotal + (order.deliveryPrice || 0);
+        }
+
+        if (address) {
+            order.address = { ...order.address, ...address };
+        }
+
+        if (phone) {
+            order.phone = phone;
+        }
+
+        if (comment !== undefined) {
+            order.comment = comment;
+        }
+
+        await order.save();
+
+        res.json(order);
+    } catch (err) {
+        next(err);
+    }
+};

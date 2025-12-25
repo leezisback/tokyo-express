@@ -18,6 +18,7 @@ export default function ProductsGrid({
     const [openFilter, setOpenFilter] = useState(false);
     const [openSort, setOpenSort] = useState(false);
     const [sort, setSort] = useState("price_desc");
+    const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
 
     const wrapRef = useRef(null);
     useEffect(() => {
@@ -46,6 +47,11 @@ export default function ProductsGrid({
                     "";
                 return key === active;
             });
+        }
+
+        // Фильтр по наличию
+        if (showOnlyAvailable) {
+            list = list.filter((p) => p.isAvailable !== false);
         }
 
         // Сортировка
@@ -80,7 +86,7 @@ export default function ProductsGrid({
         }
 
         return list;
-    }, [active, sort, products]);
+    }, [active, sort, products, showOnlyAvailable]);
 
     const sortLabel =
         SORT_OPTIONS.find((o) => o.key === sort)?.label || "Сортировка";
@@ -104,13 +110,18 @@ export default function ProductsGrid({
 
                     {openFilter && (
                         <div
-                            className="absolute z-50 mt-2 w-56 rounded-2xl bg-white p-2 text-[15px] shadow-xl ring-1 ring-black/5"
+                            className="absolute z-50 mt-2 w-56 rounded-2xl bg-white p-3 text-[15px] shadow-xl ring-1 ring-black/5"
                             role="menu"
                         >
-                            <div className="px-3 py-2 text-xs text-neutral-500">
-                                Основной фильтр сейчас — по категориям
-                                через панель сверху.
-                            </div>
+                            <label className="flex items-center gap-2 text-sm cursor-pointer hover:bg-neutral-50 p-2 rounded-lg">
+                                <input
+                                    type="checkbox"
+                                    checked={showOnlyAvailable}
+                                    onChange={(e) => setShowOnlyAvailable(e.target.checked)}
+                                    className="h-4 w-4"
+                                />
+                                Только в наличии
+                            </label>
                         </div>
                     )}
                 </div>

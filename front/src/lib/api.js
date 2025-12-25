@@ -237,3 +237,26 @@ export async function adminDeletePromotion(id, token) {
     });
     return toJsonOrThrow(r, "Не удалось удалить акцию");
 }
+
+// Получить статистику за сегодня
+export async function adminFetchStats(token) {
+    const r = await fetch(`${Api}/api/stats/today`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    return toJsonOrThrow(r, "Не удалось загрузить статистику");
+}
+
+// Обновить заказ (состав, адрес, телефон, комментарий)
+export async function adminUpdateOrder(id, data, token) {
+    const r = await fetch(`${Api}/api/orders/${id}`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+    });
+    return toJsonOrThrow(r, "Не удалось обновить заказ");
+}
