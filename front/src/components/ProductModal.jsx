@@ -1,10 +1,12 @@
 // src/components/ProductModal.jsx
 import React from "react";
+import { getImageUrl } from "@/lib/imageUtils";
 
 export default function ProductModal({ product, open, onClose, onAdd }) {
     if (!product) return null;
 
-    const hasImg = Boolean(product.image);
+    const imageUrl = getImageUrl(product.image);
+    const hasImg = Boolean(imageUrl);
 
     const composition = product.composition || product.description || "";
     const weight = product.weight || "";
@@ -35,7 +37,7 @@ export default function ProductModal({ product, open, onClose, onAdd }) {
                             <div className="aspect-[4/3] w-full">
                                 {hasImg ? (
                                     <img
-                                        src={product.image}
+                                        src={imageUrl}
                                         alt={product.name}
                                         className="h-full w-full object-contain"
                                         loading="lazy"

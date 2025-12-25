@@ -13,5 +13,6 @@ router.get("/", auth, requireAdmin, ordersController.getOrders);
 router.get("/:id", auth, requireAdmin, ordersController.getOrderById);
 router.patch("/:id/status", auth, requireAdmin, ordersController.updateOrderStatus);
 router.patch("/:id", auth, requireAdmin, ordersController.updateOrder);
+router.delete("/:id", auth, requireAdmin, ordersController.deleteOrder);
 
 module.exports = router;

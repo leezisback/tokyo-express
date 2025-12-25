@@ -12,8 +12,8 @@ const SORT_OPTIONS = [
 export default function ProductsGrid({
                                          active = "all",
                                          products = [],
-                                         onAdd,
-                                         onOpen,
+                                         onAdd,   // ✅ добавили -> открыли корзину
+                                         onOpen,  // подробнее
                                      }) {
     const [openFilter, setOpenFilter] = useState(false);
     const [openSort, setOpenSort] = useState(false);
@@ -21,6 +21,7 @@ export default function ProductsGrid({
     const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
 
     const wrapRef = useRef(null);
+
     useEffect(() => {
         const onDocClick = (e) => {
             if (!wrapRef.current) return;
@@ -36,41 +37,29 @@ export default function ProductsGrid({
     const sortedFiltered = useMemo(() => {
         let list = Array.isArray(products) ? [...products] : [];
 
-        // Фильтрация по категории
+        // категория
         if (active && active !== "all") {
             list = list.filter((p) => {
-                const key =
-                    p.categorySlug ||
-                    p.category?.slug ||
-                    p.category?.key ||
-                    p.category ||
-                    "";
+                const key = p.categorySlug || p.category?.slug || p.category?.key || p.category || "";
                 return key === active;
             });
         }
 
-        // Фильтр по наличию
+        // наличие
         if (showOnlyAvailable) {
             list = list.filter((p) => p.isAvailable !== false);
         }
 
-        // Сортировка
+        // сортировка
         switch (sort) {
             case "price_asc":
-                list.sort(
-                    (a, b) => (a.price ?? 0) - (b.price ?? 0),
-                );
+                list.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
                 break;
             case "price_desc":
-                list.sort(
-                    (a, b) => (b.price ?? 0) - (a.price ?? 0),
-                );
+                list.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
                 break;
             case "popular":
-                list.sort(
-                    (a, b) =>
-                        (b.popularity ?? 0) - (a.popularity ?? 0),
-                );
+                list.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
                 break;
             case "new": {
                 const getScore = (p) => {
@@ -88,14 +77,12 @@ export default function ProductsGrid({
         return list;
     }, [active, sort, products, showOnlyAvailable]);
 
-    const sortLabel =
-        SORT_OPTIONS.find((o) => o.key === sort)?.label || "Сортировка";
+    const sortLabel = SORT_OPTIONS.find((o) => o.key === sort)?.label || "Сортировка";
 
     return (
         <div ref={wrapRef} className="mx-auto mt-6 max-w-6xl px-4">
-            {/* Панель: Фильтр + Сортировка */}
             <div className="mb-4 flex items-center gap-4 relative">
-                {/* Фильтр (пока просто заглушка, категорию меняем через CategoryBar) */}
+                {/* Фильтр */}
                 <div className="relative">
                     <button
                         type="button"
@@ -154,9 +141,7 @@ export default function ProductsGrid({
                                                 setOpenSort(false);
                                             }}
                                             className={`w-full text-left rounded-lg px-3 py-2 hover:bg-neutral-100 ${
-                                                sort === opt.key
-                                                    ? "font-semibold"
-                                                    : ""
+                                                sort === opt.key ? "font-semibold" : ""
                                             }`}
                                         >
                                             {opt.label}
@@ -168,21 +153,12 @@ export default function ProductsGrid({
                     )}
                 </div>
 
-                {/* счётчик справа */}
-                <span className="ml-auto text-sm text-black/60">
-                    Найдено: {sortedFiltered.length}
-                </span>
+                <span className="ml-auto text-sm text-black/60">Найдено: {sortedFiltered.length}</span>
             </div>
 
-            {/* Сетка карточек */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
                 {sortedFiltered.map((p) => (
-                    <ProductCard
-                        key={p.id || p._id}
-                        p={p}
-                        onAdd={onAdd}
-                        onOpen={onOpen}
-                    />
+                    <ProductCard key={p.id || p._id} p={p} onAdd={onAdd} onOpen={onOpen} />
                 ))}
             </div>
         </div>

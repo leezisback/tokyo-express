@@ -2,8 +2,8 @@
 import React, { useEffect, useState } from "react";
 
 import { fetchCategories, fetchProducts, createOrder } from "@/lib/api";
+import { useCart } from "@/context/CartContext";
 import Hero from "@/components/Hero.jsx";
-import QuickLinks from "@/components/QuickLinks.jsx";
 import CategoryBar from "@/components/CategoryBar.jsx";
 import ProductsGrid from "@/components/ProductsGrid.jsx";
 import WhyUs from "@/components/WhyUs.jsx";
@@ -13,8 +13,9 @@ import CartSheet from "@/components/CartSheet.jsx";
 import CheckoutModal from "@/components/CheckoutModal.jsx";
 
 export default function HomePage() {
+    const { cart, addToCart, clearCart } = useCart();
+
     const [active, setActive] = useState("all");
-    const [cart, setCart] = useState([]);
     const [product, setProduct] = useState(null);
     const [openCart, setOpenCart] = useState(false);
     const [openCheckout, setOpenCheckout] = useState(false);
@@ -27,17 +28,13 @@ export default function HomePage() {
     const [orderLoading, setOrderLoading] = useState(false);
     const [orderError, setOrderError] = useState(null);
 
-    // загрузка категорий и товаров с backend
     useEffect(() => {
         async function load() {
             try {
                 setLoading(true);
                 setError(null);
 
-                const [cats, prods] = await Promise.all([
-                    fetchCategories(),
-                    fetchProducts({}),
-                ]);
+                const [cats, prods] = await Promise.all([fetchCategories(), fetchProducts({})]);
 
                 const normCats = (cats || []).map((c) => ({
                     ...c,
@@ -55,11 +52,8 @@ export default function HomePage() {
                 setCategories(normCats);
                 setProducts(normProducts);
 
-                if (normCats.some((c) => c.key === "baked")) {
-                    setActive("baked");
-                } else {
-                    setActive("all");
-                }
+                if (normCats.some((c) => c.key === "baked")) setActive("baked");
+                else setActive("all");
             } catch (e) {
                 console.error(e);
                 setError("Ошибка загрузки меню");
@@ -71,40 +65,38 @@ export default function HomePage() {
         load();
     }, []);
 
-    // быстрый заказ: добавить товар в корзину и открыть оформление
+    // ✅ НОРМАЛЬНОЕ добавление: открываем корзину
+    const addAndOpenCart = (p) => {
+        if (!p) return;
+        addToCart(p);
+        setOpenCart(true);
+    };
+
+    // ✅ Быстрый заказ (если где-то нужен отдельно): сразу оформление
     const quickOrder = (p) => {
         if (!p) return;
-        setCart((c) => {
-            const ex = c.find((x) => x.id === p.id);
-            if (ex) {
-                return c.map((x) =>
-                    x.id === p.id ? { ...x, qty: x.qty + 1 } : x
-                );
-            }
-            return [
-                ...c,
-                { id: p.id, name: p.name, price: p.price, qty: 1 },
-            ];
-        });
+        addToCart(p);
         setOpenCheckout(true);
     };
 
-    // отправка заказа на backend
     const handleSubmitOrder = async (mode, form) => {
         try {
             setOrderLoading(true);
             setOrderError(null);
 
-            const items = cart.map((i) => ({
-                product: i.id,     // ObjectId товара в Mongo
-                name: i.name,
-                price: i.price,
-                qty: i.qty,
+            const items = cart.map((item) => ({
+                productId: item.productId,
+                name: item.name,
+                price: item.price,
+                qty: item.qty,
+                image: item.image,
+                weight: item.weight,
+                composition: item.composition,
             }));
 
             const payload = {
                 items,
-                mode, // "delivery" | "pickup"
+                mode,
                 address:
                     mode === "delivery"
                         ? {
@@ -118,19 +110,18 @@ export default function HomePage() {
                         : {},
                 phone: form.phone.trim(),
                 comment: form.comment || "",
-                // deliveryPrice/total пусть считает backend по своей логике
             };
 
-            await createOrder(payload);
+            const order = await createOrder(payload);
 
-            // успех: чистим корзину, закрываем модалку
-            setCart([]);
+            clearCart();
             setOpenCheckout(false);
-            alert("Заказ успешно оформлен! Мы скоро вам перезвоним.");
+
+            const orderNum = order.shortId || order._id?.slice(-6) || "???";
+            alert(`Заказ №${orderNum} успешно оформлен! Мы скоро вам перезвоним.`);
         } catch (e) {
             console.error(e);
-            setOrderError("Ошибка при оформлении заказа. Попробуйте ещё раз.");
-            // пробрасываем ошибку, чтобы CheckoutModal тоже мог её отловить
+            setOrderError(e.message || "Ошибка при оформлении заказа. Попробуйте ещё раз.");
             throw e;
         } finally {
             setOrderLoading(false);
@@ -144,14 +135,13 @@ export default function HomePage() {
                 product={product}
                 open={!!product}
                 onClose={() => setProduct(null)}
-                onAdd={quickOrder}
+                // было: onAdd={quickOrder}
+                onAdd={addAndOpenCart}
             />
 
             <CartSheet
                 open={openCart}
                 onClose={() => setOpenCart(false)}
-                cart={cart}
-                setCart={setCart}
                 onCheckout={() => {
                     setOpenCart(false);
                     setOpenCheckout(true);
@@ -168,37 +158,22 @@ export default function HomePage() {
             />
 
             {/* Контент */}
-
-
             <Hero />
 
-            {!loading && !error && (
-                <QuickLinks
-                    categories={categories}
-                    onCategoryClick={setActive}
-                />
-            )}
+            <hr/>
+            {loading && <div className="mt-6 text-sm text-neutral-600">Загрузка меню...</div>}
+            {error && <div className="mt-6 text-sm text-red-600">{error}</div>}
 
-            {loading && (
-                <div className="mt-6 text-sm text-neutral-600">
-                    Загрузка меню...
-                </div>
-            )}
-            {error && (
-                <div className="mt-6 text-sm text-red-600">{error}</div>
-            )}
-            <div id="menu">
-                <CategoryBar
-                    active={active}
-                    setActive={setActive}
-                    categories={categories}
-                />
+            <div id="menu" style={{ marginTop: "2rem" }} className="flex justify-center">
+                <CategoryBar active={active} setActive={setActive} categories={categories} />
             </div>
+
             {!loading && !error && (
                 <ProductsGrid
                     active={active}
                     products={products}
-                    onAdd={quickOrder}
+                    // было: onAdd={quickOrder}
+                    onAdd={addAndOpenCart}
                     onOpen={setProduct}
                 />
             )}

@@ -12,6 +12,7 @@ import {
     uploadImage,
 } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext.jsx";
+import { getImageUrl } from "@/lib/imageUtils";
 
 function slugify(value = "") {
     return value
@@ -57,7 +58,6 @@ export default function AdminMenuPage() {
         isAvailable: true,
         isPromotion: false,
         discountPercent: 0,
-        position: 0,
         spicyLevel: 0,
     });
     const [prodSaving, setProdSaving] = useState(false);
@@ -228,7 +228,6 @@ export default function AdminMenuPage() {
             isAvailable: true,
             isPromotion: false,
             discountPercent: 0,
-            position: 0,
             spicyLevel: 0,
         });
         setProdError(null);
@@ -243,7 +242,7 @@ export default function AdminMenuPage() {
         }
 
         setProductForm((f) => {
-            if (field === "price" || field === "discountPercent" || field === "position") {
+            if (field === "price" || field === "discountPercent") {
                 return { ...f, [field]: value }; // как строка, приведём перед отправкой
             }
             return { ...f, [field]: value };
@@ -267,7 +266,6 @@ export default function AdminMenuPage() {
                 p.discountPercent != null
                     ? String(p.discountPercent)
                     : "0",
-            position: p.position != null ? String(p.position) : "0",
             spicyLevel: p.spicyLevel != null ? String(p.spicyLevel) : "0",
         });
         setProdError(null);
@@ -353,7 +351,6 @@ export default function AdminMenuPage() {
             isAvailable: Boolean(productForm.isAvailable),
             isPromotion: Boolean(productForm.isPromotion),
             discountPercent: Number(productForm.discountPercent) || 0,
-            position: Number(productForm.position) || 0,
             spicyLevel: Number(productForm.spicyLevel) || 0,
         };
 
@@ -726,7 +723,7 @@ export default function AdminMenuPage() {
                                 />
                             </label>
 
-                            <label>
+                            <label className="col-span-2">
                                 Вес
                                 <input
                                     className="mt-1 w-full rounded-xl border px-2 py-1"
@@ -735,18 +732,6 @@ export default function AdminMenuPage() {
                                         "weight",
                                     )}
                                     placeholder="например 245 г"
-                                />
-                            </label>
-
-                            <label>
-                                Позиция
-                                <input
-                                    type="number"
-                                    className="mt-1 w-full rounded-xl border px-2 py-1"
-                                    value={productForm.position}
-                                    onChange={handleProductChange(
-                                        "position",
-                                    )}
                                 />
                             </label>
                         </div>
@@ -805,7 +790,7 @@ export default function AdminMenuPage() {
                                 <div className="aspect-[4/3] w-full overflow-hidden rounded-lg bg-white grid place-items-center">
                                     {productForm.image ? (
                                         <img
-                                            src={productForm.image}
+                                            src={getImageUrl(productForm.image)}
                                             alt={productForm.name}
                                             className="h-full w-full object-contain"
                                         />

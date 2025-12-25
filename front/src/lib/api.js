@@ -1,5 +1,5 @@
 // src/lib/api.js
-const Api = "";
+const Api = "http://localhost:5001";
 
 async function toJsonOrThrow(r, defaultMessage = "Ошибка запроса") {
     let data = null;
@@ -259,4 +259,71 @@ export async function adminUpdateOrder(id, data, token) {
         body: JSON.stringify(data),
     });
     return toJsonOrThrow(r, "Не удалось обновить заказ");
+}
+
+// Удалить заказ
+export async function adminDeleteOrder(id, token) {
+    const r = await fetch(`${Api}/api/orders/${id}`, {
+        method: "DELETE",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    return toJsonOrThrow(r, "Не удалось удалить заказ");
+}
+
+// === Админ: пользователи ===
+
+export async function adminFetchUsers(token) {
+    const r = await fetch(`${Api}/api/users`, {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    return toJsonOrThrow(r, "Не удалось загрузить пользователей");
+}
+
+export async function adminFetchUser(id, token) {
+    const r = await fetch(`${Api}/api/users/${id}`, {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    return toJsonOrThrow(r, "Не удалось загрузить пользователя");
+}
+
+export async function adminCreateUser(data, token) {
+    const r = await fetch(`${Api}/api/users`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+    });
+    return toJsonOrThrow(r, "Не удалось создать пользователя");
+}
+
+export async function adminUpdateUser(id, data, token) {
+    const r = await fetch(`${Api}/api/users/${id}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+    });
+    return toJsonOrThrow(r, "Не удалось обновить пользователя");
+}
+
+export async function adminDeleteUser(id, token) {
+    const r = await fetch(`${Api}/api/users/${id}`, {
+        method: "DELETE",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    return toJsonOrThrow(r, "Не удалось удалить пользователя");
 }

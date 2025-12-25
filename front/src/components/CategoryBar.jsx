@@ -26,7 +26,7 @@ export default function CategoryBar({ active, setActive, categories = [] }) {
             label: c.name || c.label,
         }));
         // "Все" как отдельный таб
-        return [{ key: "all", label: "Все" }, ...base];
+        return [ ...base];
     }, [categories]);
 
     const tabBase =

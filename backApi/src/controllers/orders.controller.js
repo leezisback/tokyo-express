@@ -14,13 +14,25 @@ exports.createOrder = async (req, res, next) => {
             return res.status(400).json({ message: "Укажите номер телефона" });
         }
 
+        // Нормализуем items: поддерживаем и product (старый формат) и productId (новый)
+        const normalizedItems = items.map((item) => ({
+            product: item.productId || item.product,
+            productId: item.productId || item.product,
+            name: item.name || "",
+            price: item.price || 0,
+            qty: item.qty || item.quantity || 1,
+            image: item.image || "",
+            weight: item.weight || "",
+            composition: item.composition || "",
+        }));
+
         const deliveryMode = mode === "pickup" ? "pickup" : "delivery";
-        const subtotal = calcTotal(items);
-        const deliveryPrice = deliveryMode === "pickup" ? 0 : 150; // можно вынести в config
+        const subtotal = calcTotal(normalizedItems);
+        const deliveryPrice = deliveryMode === "pickup" ? 0 : 150;
         const total = subtotal + deliveryPrice;
 
         const order = await Order.create({
-            items,
+            items: normalizedItems,
             subtotal,
             deliveryPrice,
             total,
@@ -39,6 +51,10 @@ exports.createOrder = async (req, res, next) => {
 exports.getOrders = async (req, res, next) => {
     try {
         const orders = await Order.find()
+            .populate({
+                path: "items.product",
+                select: "name image price weight composition description",
+            })
             .sort({ createdAt: -1 })
             .lean();
 
@@ -130,6 +146,22 @@ exports.updateOrder = async (req, res, next) => {
         await order.save();
 
         res.json(order);
+    } catch (err) {
+        next(err);
+    }
+};
+
+// Админ: удалить заказ
+exports.deleteOrder = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        const order = await Order.findByIdAndDelete(id);
+        if (!order) {
+            return res.status(404).json({ message: "Заказ не найден" });
+        }
+
+        res.json({ message: "Заказ удалён" });
     } catch (err) {
         next(err);
     }
